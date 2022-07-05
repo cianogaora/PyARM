@@ -1,6 +1,6 @@
 class Register:
-    def __init__(self):
+    def __init__(self, max):
         self.value = '0x0'
-        self.max = 2**32
+        self.max = max
         self.name = 'R'
 

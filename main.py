@@ -4,13 +4,30 @@ import registers
 def init_regs():
     regs = []
     for i in range(13):
-        newReg = registers.Register()
+        newReg = registers.Register(2**32)
         newReg.name = newReg.name + str(i)
         regs.append(newReg)
 
-    cpsr = registers.Register()
-    cpsr.name = "CPSR"
-    cpsr.value = "0"
+    neg = registers.Register(1)
+    neg.name = "NEGATIVE"
+    neg.value = "0"
+    regs.append(neg)
+
+    zero = registers.Register(1)
+    zero.name = "ZERO"
+    zero.value = "0"
+    regs.append(zero)
+
+    overflow = registers.Register(1)
+    overflow.name = "OVERFLOW"
+    overflow.value = "0"
+    regs.append(overflow)
+
+    carry = registers.Register(1)
+    carry.name = "CARRY"
+    carry.value = "0"
+    regs.append(carry)
+
     return regs
 
 
@@ -43,11 +60,16 @@ def print_regs(regs):
             continue
         print(reg.name + ': ' + reg.value, end='  ')
         count += 1
+    print('\n')
 
 
-def startup():
+def startup(filename):
     regs = init_regs()
-    with open('demo.s') as f:
+    neg_idx = 13
+    zero_idx = 14
+    overflow_idx = 15
+    carry_idx = 16
+    with open(filename) as f:
         instructions = f.readlines()
     labels = []
     for instruction in instructions:
@@ -97,6 +119,8 @@ def startup():
                 regs[reg_num].value = result
 
             if op == 'mul' or op == 'MUL':
+                reg1 = regs[int(instruction[9:9 + reg_digits])]
+
                 if instruction[12] == 'r' or instruction[12] == 'R':
                     first = int(regs[int(instruction[9:9 + reg_digits])].value, 16)
                     second = int(regs[int(instruction[13:13 + reg_digits])].value, 16)
@@ -109,13 +133,22 @@ def startup():
                         second += (instruction[count])
                     second = int(second)
                 result = first * second
-                result = hex(result)
-                regs[reg_num].value = result
+                # result = hex(result)
+
+                if result > reg1.max:
+                    result = reg1.max
+
+
+                regs[reg_num].value = hex(result)
 
             if op == 'sub' or op == 'SUB':
+                reg1 = regs[int(instruction[9:9 + reg_digits])]
+
+
                 if instruction[12] == 'r' or instruction[12] == 'R':
-                    first = int(regs[int(instruction[9:9 + reg_digits])].value, 16)
-                    second = int(regs[int(instruction[13:13 + reg_digits])].value, 16)
+                    reg2 = regs[int(instruction[13:13 + reg_digits])]
+                    first = int(reg1.value, 16)
+                    second = int(reg2.value, 16)
 
                 elif instruction[12] == '#':
                     first = int(regs[int(instruction[9])].value, 16)
@@ -124,7 +157,11 @@ def startup():
                     while instruction[count].isnumeric():
                         second += (instruction[count])
                     second = int(second)
+
                 result = hex(first - second)
+                if first - second < 0:
+                    result = hex(reg1.max - second - first)
+                    regs[neg_idx].value = "1"
                 regs[reg_num].value = result
 
             if op == 'and' or op == 'AND':
@@ -178,4 +215,5 @@ def startup():
 
 
 if __name__ == '__main__':
-    startup()
+    filename = 'demo.s'
+    startup(filename)
