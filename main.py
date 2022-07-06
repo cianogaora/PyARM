@@ -76,6 +76,7 @@ def startup(filename):
     for instruction in instructions:
 
         if instruction == 'end':
+            print_regs(regs)
             return
 
         elif instruction == '\n' or instruction[0] == ';':
@@ -88,13 +89,19 @@ def startup(filename):
             continue
 
         else:
-            print(f"executing instruction {instruction}") 
+            print(f"executing instruction {instruction}")
             op = get_op(instruction)
             reg_num = get_reg_num(instruction)
             reg_digits = len(str(reg_num))
             reg1 = regs[int(instruction[9:9 + reg_digits])]
+            first = int(reg1.value, 16)
+            second = 0
 
-            first, second = 0, 0
+            if len(instruction) >= 13:
+                if instruction[12] == 'r' or instruction[12] == 'R':
+                    reg2 = regs[int(instruction[13:13 + reg_digits])]
+                    second = int(reg2.value, 16)
+
             if op == 'mov' or op == 'MOV':
                 if instruction[8] == '#':
                     value = instruction[9]
@@ -109,117 +116,71 @@ def startup(filename):
                         regs[reg_num].value = hex(value)
                         print(f"value too high on line {line_num}")
                         return
+                    print(f"moving value {value} into reg {reg_num}")
                     regs[reg_num].value = hex(value)
+                    print(regs[reg_num].value)
+                    print('\n')
+
+            if op != 'mov' or op != 'MOV':
+                if len(instruction) >= 13:
+                    if instruction[12] == '#':
+                        second = instruction[13]
+                        count = 14
+                        while instruction[count].isnumeric():
+                            second += (instruction[count])
+                        second = int(second)
 
             if op == 'add' or op == 'ADD':
-
-                if instruction[12] == 'r' or instruction[12] == 'R':
-                    first = int(regs[int(instruction[9:9 + reg_digits])].value, 16)
-                    second = int(regs[int(instruction[13:13 + reg_digits])].value, 16)
-
-                elif instruction[12] == '#':
-                    first = int(regs[int(instruction[9])].value, 16)
-                    second = instruction[13]
-                    count = 14
-                    while instruction[count].isnumeric():
-                        second += (instruction[count])
-
-                    second = int(second)
                 result = hex(first + second)
+                print(f"moving value {result} into reg {reg_num}")
                 regs[reg_num].value = result
+                print(regs[reg_num].value)
+                print('\n')
 
             if op == 'mul' or op == 'MUL':
-
-
-                if instruction[12] == 'r' or instruction[12] == 'R':
-                    first = int(regs[int(instruction[9:9 + reg_digits])].value, 16)
-                    second = int(regs[int(instruction[13:13 + reg_digits])].value, 16)
-
-                elif instruction[12] == '#':
-                    first = int(regs[int(instruction[9])].value, 16)
-                    second = instruction[13]
-                    count = 14
-                    while instruction[count].isnumeric():
-                        second += (instruction[count])
-                    second = int(second)
                 result = first * second
-                # result = hex(result)
 
                 if result > reg1.max:
                     result = reg1.max
                     regs[overflow_idx].value = "1"
+                print(f"moving value {result} into reg {reg_num}")
                 regs[reg_num].value = hex(result)
-
+                print(regs[reg_num].value)
+                print('\n')
             if op == 'sub' or op == 'SUB':
-
-                if instruction[12] == 'r' or instruction[12] == 'R':
-                    reg2 = regs[int(instruction[13:13 + reg_digits])]
-                    first = int(reg1.value, 16)
-                    second = int(reg2.value, 16)
-
-                elif instruction[12] == '#':
-                    first = int(regs[int(instruction[9])].value, 16)
-                    second = instruction[13]
-                    count = 14
-                    while instruction[count].isnumeric():
-                        second += (instruction[count])
-                    second = int(second)
 
                 result = hex(first - second)
                 if first - second < 0:
                     result = hex(reg1.max - second - first)
                     regs[neg_idx].value = "1"
+
+                print(f"moving value {result} into reg {reg_num}")
                 regs[reg_num].value = result
+                print(regs[reg_num].value)
+                print('\n')
 
             if op == 'and' or op == 'AND':
-                if instruction[12] == 'r' or instruction[12] == 'R':
-                    first = int(regs[int(instruction[9:9 + reg_digits])].value, 16)
-                    second = int(regs[int(instruction[13:13 + reg_digits])].value, 16)
-
-                elif instruction[12] == '#':
-                    first = regs[int(instruction[9])].value
-                    second = instruction[13]
-                    count = 14
-                    while instruction[count].isnumeric():
-                        second += (instruction[count])
-                    second = int(second)
                 result = hex(first & second)
+                print(f"moving value {result} into reg {reg_num}")
                 regs[reg_num].value = result
+                print(regs[reg_num].value)
+                print('\n')
 
             if op == 'orr' or op == 'ORR':
-                if instruction[12] == 'r' or instruction[12] == 'R':
-                    first = int(regs[int(instruction[9:9 + reg_digits])].value, 16)
-                    second = int(regs[int(instruction[13:13 + reg_digits])].value, 16)
-
-                elif instruction[12] == '#':
-                    first = regs[int(instruction[9])].value
-                    second = instruction[13]
-                    count = 14
-                    while instruction[count].isnumeric():
-                        second += (instruction[count])
-                    second = int(second)
-
                 result = hex(first | second)
+                print(f"moving value {result} into reg {reg_num}")
                 regs[reg_num].value = result
+                print(regs[reg_num].value)
+                print('\n')
 
             if op == 'eor' or op == 'EOR':
-                if instruction[12] == 'r' or instruction[12] == 'R':
-                    first = int(regs[int(instruction[9:9 + reg_digits])].value, 16)
-                    second = int(regs[int(instruction[13:13 + reg_digits])].value, 16)
-
-                elif instruction[12] == '#':
-                    first = regs[int(instruction[9])].value
-                    second = instruction[13]
-                    count = 14
-                    while instruction[count].isnumeric():
-                        second += (instruction[count])
-                    second = int(second)
-
                 result = hex(first ^ second)
+                print(f"moving value {result} into reg {reg_num}")
                 regs[reg_num].value = result
-            line_num += 1
+                print(regs[reg_num].value)
+                print('\n')
 
-    print_regs(regs)
+            line_num += 1
 
 
 if __name__ == '__main__':
