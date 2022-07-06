@@ -4,7 +4,7 @@ import registers
 def init_regs():
     regs = []
     for i in range(13):
-        newReg = registers.Register(2**32)
+        newReg = registers.Register(2 ** 32)
         newReg.name = newReg.name + str(i)
         regs.append(newReg)
 
@@ -69,25 +69,30 @@ def startup(filename):
     zero_idx = 14
     overflow_idx = 15
     carry_idx = 16
+    line_num = 1
     with open(filename) as f:
         instructions = f.readlines()
     labels = []
     for instruction in instructions:
-        print(f"executing instruction {instruction}")
+
         if instruction == 'end':
-            break
+            return
 
         elif instruction == '\n' or instruction[0] == ';':
+            line_num += 1
             continue
 
         if instruction[-2] == ':':
             labels.append(instruction[0:-2])
+            line_num += 1
             continue
 
         else:
+            print(f"executing instruction {instruction}") 
             op = get_op(instruction)
             reg_num = get_reg_num(instruction)
             reg_digits = len(str(reg_num))
+            reg1 = regs[int(instruction[9:9 + reg_digits])]
 
             first, second = 0, 0
             if op == 'mov' or op == 'MOV':
@@ -99,13 +104,18 @@ def startup(filename):
                         count += 1
 
                     value = int(value)
+                    if value > reg1.max:
+                        value = reg1.max
+                        regs[reg_num].value = hex(value)
+                        print(f"value too high on line {line_num}")
+                        return
                     regs[reg_num].value = hex(value)
 
             if op == 'add' or op == 'ADD':
 
                 if instruction[12] == 'r' or instruction[12] == 'R':
-                    first = int(regs[int(instruction[9:9+reg_digits])].value, 16)
-                    second = int(regs[int(instruction[13:13+reg_digits])].value, 16)
+                    first = int(regs[int(instruction[9:9 + reg_digits])].value, 16)
+                    second = int(regs[int(instruction[13:13 + reg_digits])].value, 16)
 
                 elif instruction[12] == '#':
                     first = int(regs[int(instruction[9])].value, 16)
@@ -119,7 +129,7 @@ def startup(filename):
                 regs[reg_num].value = result
 
             if op == 'mul' or op == 'MUL':
-                reg1 = regs[int(instruction[9:9 + reg_digits])]
+
 
                 if instruction[12] == 'r' or instruction[12] == 'R':
                     first = int(regs[int(instruction[9:9 + reg_digits])].value, 16)
@@ -137,13 +147,10 @@ def startup(filename):
 
                 if result > reg1.max:
                     result = reg1.max
-
-
+                    regs[overflow_idx].value = "1"
                 regs[reg_num].value = hex(result)
 
             if op == 'sub' or op == 'SUB':
-                reg1 = regs[int(instruction[9:9 + reg_digits])]
-
 
                 if instruction[12] == 'r' or instruction[12] == 'R':
                     reg2 = regs[int(instruction[13:13 + reg_digits])]
@@ -209,7 +216,8 @@ def startup(filename):
                     second = int(second)
 
                 result = hex(first ^ second)
-                regs[reg_num].value = result    
+                regs[reg_num].value = result
+            line_num += 1
 
     print_regs(regs)
 
