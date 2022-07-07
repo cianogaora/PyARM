@@ -39,5 +39,16 @@ and r3, r1, r2
 orr r4, r1, r2
 eor r5, r1, r2
 
+;>9
 mov r8, #13
+
+Flags:
+mov r1, #1
+sub r1, #2
+
+mov r1, #4294967295
+add r1, #2
+
+
+
 end

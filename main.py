@@ -4,9 +4,9 @@ import registers
 def init_regs():
     regs = []
     for i in range(13):
-        newReg = registers.Register(2 ** 32)
-        newReg.name = newReg.name + str(i)
-        regs.append(newReg)
+        new_reg = registers.Register((2 ** 32)-1)
+        new_reg.name = new_reg.name + str(i)
+        regs.append(new_reg)
 
     neg = registers.Register(1)
     neg.name = "NEGATIVE"
@@ -93,9 +93,18 @@ def startup(filename):
             op = get_op(instruction)
             reg_num = get_reg_num(instruction)
             reg_digits = len(str(reg_num))
-            reg1 = regs[int(instruction[9:9 + reg_digits])]
-            first = int(reg1.value, 16)
-            second = 0
+            second = ''
+            if instruction[8] != '#':
+                reg1 = regs[int(instruction[9:9 + reg_digits])]
+                first = int(reg1.value, 16)
+            else:
+                reg1 = regs[reg_num]
+                first = int(reg1.value, 16)
+                count = 9
+                while instruction[count].isnumeric():
+                    second += instruction[count]
+                    count += 1
+                second = int(second)
 
             if len(instruction) >= 13:
                 if instruction[12] == 'r' or instruction[12] == 'R':
@@ -121,7 +130,7 @@ def startup(filename):
                     print(regs[reg_num].value)
                     print('\n')
 
-            if op != 'mov' or op != 'MOV':
+            if op != 'mov' and op != 'MOV':
                 if len(instruction) >= 13:
                     if instruction[12] == '#':
                         second = instruction[13]
@@ -132,8 +141,14 @@ def startup(filename):
 
             if op == 'add' or op == 'ADD':
                 result = hex(first + second)
+                if int(result, 16) > reg1.max:
+                    result = hex(int(result, 16) - reg1.max - 1)
+                    regs[overflow_idx].value = '1'
+
                 print(f"moving value {result} into reg {reg_num}")
                 regs[reg_num].value = result
+                if result == 0:
+                    regs[zero_idx].value = '1'
                 print(regs[reg_num].value)
                 print('\n')
 
@@ -145,17 +160,23 @@ def startup(filename):
                     regs[overflow_idx].value = "1"
                 print(f"moving value {result} into reg {reg_num}")
                 regs[reg_num].value = hex(result)
+                if result == 0:
+                    regs[zero_idx].value = '1'
                 print(regs[reg_num].value)
                 print('\n')
-            if op == 'sub' or op == 'SUB':
 
+            if op == 'sub' or op == 'SUB':
                 result = hex(first - second)
+                regs[neg_idx].value = "1"
+
                 if first - second < 0:
                     result = hex(reg1.max - second - first)
-                    regs[neg_idx].value = "1"
+                    regs[neg_idx].value = "0"
 
                 print(f"moving value {result} into reg {reg_num}")
                 regs[reg_num].value = result
+                if result == 0:
+                    regs[zero_idx].value = '1'
                 print(regs[reg_num].value)
                 print('\n')
 
@@ -163,6 +184,8 @@ def startup(filename):
                 result = hex(first & second)
                 print(f"moving value {result} into reg {reg_num}")
                 regs[reg_num].value = result
+                if result == 0:
+                    regs[zero_idx].value = '1'
                 print(regs[reg_num].value)
                 print('\n')
 
@@ -170,6 +193,8 @@ def startup(filename):
                 result = hex(first | second)
                 print(f"moving value {result} into reg {reg_num}")
                 regs[reg_num].value = result
+                if result == 0:
+                    regs[zero_idx].value = '1'
                 print(regs[reg_num].value)
                 print('\n')
 
@@ -177,6 +202,8 @@ def startup(filename):
                 result = hex(first ^ second)
                 print(f"moving value {result} into reg {reg_num}")
                 regs[reg_num].value = result
+                if result == 0:
+                    regs[zero_idx].value = '1'
                 print(regs[reg_num].value)
                 print('\n')
 
