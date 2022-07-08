@@ -43,12 +43,16 @@ eor r5, r1, r2
 mov r8, #13
 
 Flags:
+;negative + carry
 mov r1, #1
 sub r1, #2
 
+;overflow
 mov r1, #4294967295
 add r1, #2
 
-
+;zero
+mov r1, #4
+sub r1, #4
 
 end

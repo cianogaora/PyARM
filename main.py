@@ -1,10 +1,15 @@
 import registers
 
+neg_idx = 13
+zero_idx = 14
+overflow_idx = 15
+carry_idx = 16
+
 
 def init_regs():
     regs = []
     for i in range(13):
-        new_reg = registers.Register((2 ** 32)-1)
+        new_reg = registers.Register((2 ** 32) - 1)
         new_reg.name = new_reg.name + str(i)
         regs.append(new_reg)
 
@@ -58,17 +63,143 @@ def print_regs(regs):
             print(reg.name + ': ' + reg.value + '\n', end='')
             count += 1
             continue
+        if count == 13:
+            print('')
+
         print(reg.name + ': ' + reg.value, end='  ')
         count += 1
     print('\n')
 
 
+def mov(instruction, regs, reg1, reg_num, line_num):
+    if instruction[8] == '#':
+        value = instruction[9]
+        count = 10
+        while instruction[count].isnumeric():
+            value += instruction[count]
+            count += 1
+
+        value = int(value)
+        if value > reg1.max:
+            value = reg1.max
+            regs[reg_num].value = hex(value)
+            print(f"value too high on line {line_num}")
+            return
+        print(f"moving value {value} into reg {reg_num}")
+        regs[reg_num].value = hex(value)
+        print(regs[reg_num].value)
+        print('')
+
+
+def add(regs, first, second, reg1, reg_num):
+    result = hex(first + second)
+    regs[overflow_idx].value = '0'
+    regs[zero_idx].value = '0'
+    regs[neg_idx].value = '0'
+    regs[carry_idx].value = '1'
+    if int(result, 16) > reg1.max:
+        result = hex(int(result, 16) - reg1.max - 1)
+        regs[overflow_idx].value = '1'
+
+    print(f"moving value {result} into reg {reg_num}")
+    regs[reg_num].value = result
+    if result == 0:
+        regs[zero_idx].value = '1'
+
+    print(regs[reg_num].value)
+    print('')
+
+
+def mul(regs, first, second, reg1, reg_num):
+    result = first * second
+    regs[overflow_idx].value = '0'
+    regs[zero_idx].value = '0'
+    regs[neg_idx].value = '0'
+    regs[carry_idx].value = '1'
+
+    if result > reg1.max:
+        result = reg1.max
+        regs[overflow_idx].value = "1"
+
+    print(f"moving value {result} into reg {reg_num}")
+    regs[reg_num].value = hex(result)
+    if result == 0:
+        regs[zero_idx].value = '1'
+
+    print(regs[reg_num].value)
+    print('')
+
+
+def sub(regs, first, second, reg1, reg_num):
+    result = hex(first - second)
+    regs[overflow_idx].value = '0'
+    regs[zero_idx].value = '0'
+    regs[neg_idx].value = '0'
+    regs[carry_idx].value = '1'
+
+    if first - second < 0:
+        result = hex(reg1.max - second - first)
+        regs[neg_idx].value = "1"
+        regs[carry_idx].value = "0"
+    if first - second == 0:
+        regs[zero_idx].value = '1'
+
+    print(f"moving value {result} into reg {reg_num}")
+    regs[reg_num].value = result
+    print(regs[reg_num].value)
+    print('')
+
+
+def bit_and(regs, first, second, reg_num):
+    result = hex(first & second)
+    regs[overflow_idx].value = '0'
+    regs[zero_idx].value = '0'
+    regs[neg_idx].value = '0'
+    regs[carry_idx].value = '1'
+
+    print(f"moving value {result} into reg {reg_num}")
+    regs[reg_num].value = result
+    if result == 0:
+        regs[zero_idx].value = '1'
+
+    print(regs[reg_num].value)
+    print('')
+
+
+def orr(regs, first, second, reg_num):
+    result = hex(first | second)
+    regs[overflow_idx].value = '0'
+    regs[zero_idx].value = '0'
+    regs[neg_idx].value = '0'
+    regs[carry_idx].value = '1'
+
+    print(f"moving value {result} into reg {reg_num}")
+    regs[reg_num].value = result
+    if result == 0:
+        regs[zero_idx].value = '1'
+
+    print(regs[reg_num].value)
+    print('')
+
+
+def eor(regs, first, second, reg_num):
+    result = hex(first ^ second)
+    regs[overflow_idx].value = '0'
+    regs[zero_idx].value = '0'
+    regs[neg_idx].value = '0'
+    regs[carry_idx].value = '1'
+
+    print(f"moving value {result} into reg {reg_num}")
+    regs[reg_num].value = result
+    if result == 0:
+        regs[zero_idx].value = '1'
+
+    print(regs[reg_num].value)
+    print('')
+
+
 def startup(filename):
     regs = init_regs()
-    neg_idx = 13
-    zero_idx = 14
-    overflow_idx = 15
-    carry_idx = 16
     line_num = 1
     with open(filename) as f:
         instructions = f.readlines()
@@ -89,7 +220,7 @@ def startup(filename):
             continue
 
         else:
-            print(f"executing instruction {instruction}")
+            print(f"executing instruction {instruction[0:-1]}")
             op = get_op(instruction)
             reg_num = get_reg_num(instruction)
             reg_digits = len(str(reg_num))
@@ -112,23 +243,7 @@ def startup(filename):
                     second = int(reg2.value, 16)
 
             if op == 'mov' or op == 'MOV':
-                if instruction[8] == '#':
-                    value = instruction[9]
-                    count = 10
-                    while instruction[count].isnumeric():
-                        value += instruction[count]
-                        count += 1
-
-                    value = int(value)
-                    if value > reg1.max:
-                        value = reg1.max
-                        regs[reg_num].value = hex(value)
-                        print(f"value too high on line {line_num}")
-                        return
-                    print(f"moving value {value} into reg {reg_num}")
-                    regs[reg_num].value = hex(value)
-                    print(regs[reg_num].value)
-                    print('\n')
+                mov(instruction, regs, reg1, reg_num, line_num)
 
             if op != 'mov' and op != 'MOV':
                 if len(instruction) >= 13:
@@ -140,72 +255,25 @@ def startup(filename):
                         second = int(second)
 
             if op == 'add' or op == 'ADD':
-                result = hex(first + second)
-                if int(result, 16) > reg1.max:
-                    result = hex(int(result, 16) - reg1.max - 1)
-                    regs[overflow_idx].value = '1'
-
-                print(f"moving value {result} into reg {reg_num}")
-                regs[reg_num].value = result
-                if result == 0:
-                    regs[zero_idx].value = '1'
-                print(regs[reg_num].value)
-                print('\n')
+                add(regs, first, second, reg1, reg_num)
 
             if op == 'mul' or op == 'MUL':
-                result = first * second
-
-                if result > reg1.max:
-                    result = reg1.max
-                    regs[overflow_idx].value = "1"
-                print(f"moving value {result} into reg {reg_num}")
-                regs[reg_num].value = hex(result)
-                if result == 0:
-                    regs[zero_idx].value = '1'
-                print(regs[reg_num].value)
-                print('\n')
+                mul(regs, first, second, reg1, reg_num)
 
             if op == 'sub' or op == 'SUB':
-                result = hex(first - second)
-                regs[neg_idx].value = "1"
-
-                if first - second < 0:
-                    result = hex(reg1.max - second - first)
-                    regs[neg_idx].value = "0"
-
-                print(f"moving value {result} into reg {reg_num}")
-                regs[reg_num].value = result
-                if result == 0:
-                    regs[zero_idx].value = '1'
-                print(regs[reg_num].value)
-                print('\n')
+                sub(regs, first, second, reg1, reg_num)
 
             if op == 'and' or op == 'AND':
-                result = hex(first & second)
-                print(f"moving value {result} into reg {reg_num}")
-                regs[reg_num].value = result
-                if result == 0:
-                    regs[zero_idx].value = '1'
-                print(regs[reg_num].value)
-                print('\n')
+                bit_and(regs, first, second, reg_num)
 
             if op == 'orr' or op == 'ORR':
-                result = hex(first | second)
-                print(f"moving value {result} into reg {reg_num}")
-                regs[reg_num].value = result
-                if result == 0:
-                    regs[zero_idx].value = '1'
-                print(regs[reg_num].value)
-                print('\n')
+                orr(regs, first, second, reg_num)
 
             if op == 'eor' or op == 'EOR':
-                result = hex(first ^ second)
-                print(f"moving value {result} into reg {reg_num}")
-                regs[reg_num].value = result
-                if result == 0:
-                    regs[zero_idx].value = '1'
-                print(regs[reg_num].value)
-                print('\n')
+                eor(regs, first, second, reg_num)
+
+            if op == 'cmp' or op == 'CMP':
+                pass
 
             line_num += 1
 
