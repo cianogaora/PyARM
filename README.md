@@ -7,3 +7,5 @@ MOV r2, r1
 add r1, r2, r3
  ````
 Each instruction may be capitalised or lowercase. View the 'demo.s' file for further syntax examples
+
+Development in progress...
