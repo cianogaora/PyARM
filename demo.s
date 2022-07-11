@@ -1,6 +1,6 @@
 ;test mov
 Stores:
-mov r1, #1
+movs r1, #1
 mov r2, #2
 MOV r1, #1
 MOV r2, #2

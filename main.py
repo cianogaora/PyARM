@@ -46,11 +46,19 @@ def get_op(instruction):
             return op
 
 
-def get_reg_num(instruction):
-    reg_num = instruction[5]
+def get_reg_num(instruction, op_len):
+    if op_len == 3:
+        reg_num = instruction[5]
+        if instruction[6] != ',':
+            reg_num += instruction[6]
 
-    if instruction[6] != ',':
-        reg_num += instruction[6]
+    elif op_len == 4:
+        reg_num = instruction[6]
+        if instruction[7] != ',':
+            reg_num += instruction[7]
+    else:
+        print("invalid op")
+        return
 
     reg_num = int(reg_num)
     return reg_num
@@ -71,24 +79,50 @@ def print_regs(regs):
     print('\n')
 
 
-def mov(instruction, regs, reg1, reg_num, line_num):
-    if instruction[8] == '#':
-        value = instruction[9]
-        count = 10
-        while instruction[count].isnumeric():
-            value += instruction[count]
-            count += 1
+def mov(instruction, regs, reg1, reg_num, line_num, conds):
+    if not conds:
+        if instruction[8] == '#':
+            value = instruction[9]
+            count = 10
+            while instruction[count].isnumeric():
+                value += instruction[count]
+                count += 1
 
-        value = int(value)
-        if value > reg1.max:
-            value = reg1.max
+            value = int(value)
+            if value > reg1.max:
+                value = reg1.max
+                print(f"value too high on line {line_num}")
+
+            print(f"moving value {value} into reg {reg_num}")
             regs[reg_num].value = hex(value)
-            print(f"value too high on line {line_num}")
+            print(regs[reg_num].value)
+            print('')
+
             return
+
+    else:
+        if instruction[9] == '#':
+            value = instruction[10]
+            count = 11
+            while instruction[count].isnumeric():
+                value += instruction[count]
+                count += 1
+
+            value = int(value)
+            if value > reg1.max:
+                value = reg1.max
+                regs[reg_num].value = hex(value)
+                print(f"value too high on line {line_num}")
+        if value < 0:
+            regs[neg_idx].value = '1'
+        if value == 0:
+            regs[zero_idx].value = '1'
+
         print(f"moving value {value} into reg {reg_num}")
         regs[reg_num].value = hex(value)
         print(regs[reg_num].value)
         print('')
+        return
 
 
 def add(regs, first, second, reg1, reg_num):
@@ -222,30 +256,58 @@ def startup(filename):
         else:
             print(f"executing instruction {instruction[0:-1]}")
             op = get_op(instruction)
-            reg_num = get_reg_num(instruction)
+            reg_num = get_reg_num(instruction, len(op))
             reg_digits = len(str(reg_num))
             second = ''
-            if instruction[8] != '#':
-                reg1 = regs[int(instruction[9:9 + reg_digits])]
-                first = int(reg1.value, 16)
+            conds = False
+
+            if instruction[3] == 's' or instruction[3] == 'S':
+                conds = True
+
+            if not conds:
+                if instruction[8] != '#':
+                    reg1 = regs[int(instruction[9:9 + reg_digits])]
+                    first = int(reg1.value, 16)
+                else:
+                    reg1 = regs[reg_num]
+                    first = int(reg1.value, 16)
+                    count = 9
+                    while instruction[count].isnumeric():
+                        second += instruction[count]
+                        count += 1
+                    second = int(second)
+
+                if len(instruction) >= 13:
+                    if instruction[12] == 'r' or instruction[12] == 'R':
+                        reg2 = regs[int(instruction[13:13 + reg_digits])]
+                        second = int(reg2.value, 16)
+
+                if len(instruction) >= 13:
+                    if instruction[12] == 'r' or instruction[12] == 'R':
+                        reg2 = regs[int(instruction[13:13 + reg_digits])]
+                        second = int(reg2.value, 16)
             else:
-                reg1 = regs[reg_num]
-                first = int(reg1.value, 16)
-                count = 9
-                while instruction[count].isnumeric():
-                    second += instruction[count]
-                    count += 1
-                second = int(second)
+                if instruction[9] != '#':
+                    reg1 = regs[int(instruction[10:10 + reg_digits])]
+                    first = int(reg1.value, 16)
+                else:
+                    reg1 = regs[reg_num]
+                    first = int(reg1.value, 16)
+                    count = 10
+                    while instruction[count].isnumeric():
+                        second += instruction[count]
+                        count += 1
+                    second = int(second)
 
-            if len(instruction) >= 13:
-                if instruction[12] == 'r' or instruction[12] == 'R':
-                    reg2 = regs[int(instruction[13:13 + reg_digits])]
-                    second = int(reg2.value, 16)
+                if len(instruction) >= 14:
+                    if instruction[13] == 'r' or instruction[13] == 'R':
+                        reg2 = regs[int(instruction[14:14 + reg_digits])]
+                        second = int(reg2.value, 16)
 
-            if op == 'mov' or op == 'MOV':
-                mov(instruction, regs, reg1, reg_num, line_num)
+            if op[0:3] == 'mov' or op[0:3] == 'MOV':
+                mov(instruction, regs, reg1, reg_num, line_num, conds)
 
-            if op != 'mov' and op != 'MOV':
+            if op[0:3] != 'mov' and op[0:3] != 'MOV':
                 if len(instruction) >= 13:
                     if instruction[12] == '#':
                         second = instruction[13]
@@ -254,8 +316,10 @@ def startup(filename):
                             second += (instruction[count])
                         second = int(second)
 
-            if op == 'add' or op == 'ADD':
+            if op == 'add' or op == 'ADD' or op == 'adc' or op == 'ADC':
                 add(regs, first, second, reg1, reg_num)
+                if op == 'adc' or op == 'ADC':
+                    regs[reg_num] += regs[carry_idx].value
 
             if op == 'mul' or op == 'MUL':
                 mul(regs, first, second, reg1, reg_num)
