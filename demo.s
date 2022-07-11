@@ -4,6 +4,7 @@ movs r1, #1
 mov r2, #2
 MOV r1, #1
 MOV r2, #2
+mov r3, r2
 
 ;test addition
 Adding:

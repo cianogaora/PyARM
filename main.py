@@ -97,7 +97,17 @@ def mov(instruction, regs, reg1, reg_num, line_num, conds):
             regs[reg_num].value = hex(value)
             print(regs[reg_num].value)
             print('')
-
+            return
+        else:
+            reg2_num = instruction[9]
+            count = 10
+            while instruction[count].isnumeric():
+                reg2_num += instruction[count]
+                count += 1
+            reg2_num = int(reg2_num)
+            print(f"moving value {regs[reg2_num].value} into reg {reg_num}")
+            regs[reg_num].value = regs[reg2_num].value
+            print('\n')
             return
 
     else:
@@ -113,6 +123,19 @@ def mov(instruction, regs, reg1, reg_num, line_num, conds):
                 value = reg1.max
                 regs[reg_num].value = hex(value)
                 print(f"value too high on line {line_num}")
+
+        else:
+            reg2_num = instruction[9]
+            count = 10
+            while instruction[count].isnumeric():
+                reg2_num += instruction[count]
+                count += 1
+
+            reg2_num = int(reg2_num)
+            print(f"moving value {regs[reg2_num].value} into reg {reg_num}")
+            regs[reg_num].value = regs[reg2_num].value
+            print('\n')
+
         if value < 0:
             regs[neg_idx].value = '1'
         if value == 0:
@@ -123,6 +146,8 @@ def mov(instruction, regs, reg1, reg_num, line_num, conds):
         print(regs[reg_num].value)
         print('')
         return
+
+
 
 
 def add(regs, first, second, reg1, reg_num):
