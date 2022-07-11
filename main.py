@@ -1,4 +1,5 @@
 import registers
+import alu
 
 neg_idx = 13
 zero_idx = 14
@@ -60,7 +61,7 @@ def get_reg_num(instruction, op_len):
         print("invalid op")
         return
 
-    reg_num = int(reg_num)
+    reg_num = int(reg_num, 16)
     return reg_num
 
 
@@ -79,187 +80,10 @@ def print_regs(regs):
     print('\n')
 
 
-def mov(instruction, regs, reg1, reg_num, line_num, conds):
-    if not conds:
-        if instruction[8] == '#':
-            value = instruction[9]
-            count = 10
-            while instruction[count].isnumeric():
-                value += instruction[count]
-                count += 1
-
-            value = int(value)
-            if value > reg1.max:
-                value = reg1.max
-                print(f"value too high on line {line_num}")
-
-            print(f"moving value {value} into reg {reg_num}")
-            regs[reg_num].value = hex(value)
-            print(regs[reg_num].value)
-            print('')
-            return
-        else:
-            reg2_num = instruction[9]
-            count = 10
-            while instruction[count].isnumeric():
-                reg2_num += instruction[count]
-                count += 1
-            reg2_num = int(reg2_num)
-            print(f"moving value {regs[reg2_num].value} into reg {reg_num}")
-            regs[reg_num].value = regs[reg2_num].value
-            print('\n')
-            return
-
-    else:
-        if instruction[9] == '#':
-            value = instruction[10]
-            count = 11
-            while instruction[count].isnumeric():
-                value += instruction[count]
-                count += 1
-
-            value = int(value)
-            if value > reg1.max:
-                value = reg1.max
-                regs[reg_num].value = hex(value)
-                print(f"value too high on line {line_num}")
-
-        else:
-            reg2_num = instruction[9]
-            count = 10
-            while instruction[count].isnumeric():
-                reg2_num += instruction[count]
-                count += 1
-
-            reg2_num = int(reg2_num)
-            print(f"moving value {regs[reg2_num].value} into reg {reg_num}")
-            regs[reg_num].value = regs[reg2_num].value
-            print('\n')
-
-        if value < 0:
-            regs[neg_idx].value = '1'
-        if value == 0:
-            regs[zero_idx].value = '1'
-
-        print(f"moving value {value} into reg {reg_num}")
-        regs[reg_num].value = hex(value)
-        print(regs[reg_num].value)
-        print('')
-        return
-
-
-
-
-def add(regs, first, second, reg1, reg_num):
-    result = hex(first + second)
-    regs[overflow_idx].value = '0'
-    regs[zero_idx].value = '0'
-    regs[neg_idx].value = '0'
-    regs[carry_idx].value = '1'
-    if int(result, 16) > reg1.max:
-        result = hex(int(result, 16) - reg1.max - 1)
-        regs[overflow_idx].value = '1'
-
-    print(f"moving value {result} into reg {reg_num}")
-    regs[reg_num].value = result
-    if result == 0:
-        regs[zero_idx].value = '1'
-
-    print(regs[reg_num].value)
-    print('')
-
-
-def mul(regs, first, second, reg1, reg_num):
-    result = first * second
-    regs[overflow_idx].value = '0'
-    regs[zero_idx].value = '0'
-    regs[neg_idx].value = '0'
-    regs[carry_idx].value = '1'
-
-    if result > reg1.max:
-        result = reg1.max
-        regs[overflow_idx].value = "1"
-
-    print(f"moving value {result} into reg {reg_num}")
-    regs[reg_num].value = hex(result)
-    if result == 0:
-        regs[zero_idx].value = '1'
-
-    print(regs[reg_num].value)
-    print('')
-
-
-def sub(regs, first, second, reg1, reg_num):
-    result = hex(first - second)
-    regs[overflow_idx].value = '0'
-    regs[zero_idx].value = '0'
-    regs[neg_idx].value = '0'
-    regs[carry_idx].value = '1'
-
-    if first - second < 0:
-        result = hex(reg1.max - second - first)
-        regs[neg_idx].value = "1"
-        regs[carry_idx].value = "0"
-    if first - second == 0:
-        regs[zero_idx].value = '1'
-
-    print(f"moving value {result} into reg {reg_num}")
-    regs[reg_num].value = result
-    print(regs[reg_num].value)
-    print('')
-
-
-def bit_and(regs, first, second, reg_num):
-    result = hex(first & second)
-    regs[overflow_idx].value = '0'
-    regs[zero_idx].value = '0'
-    regs[neg_idx].value = '0'
-    regs[carry_idx].value = '1'
-
-    print(f"moving value {result} into reg {reg_num}")
-    regs[reg_num].value = result
-    if result == 0:
-        regs[zero_idx].value = '1'
-
-    print(regs[reg_num].value)
-    print('')
-
-
-def orr(regs, first, second, reg_num):
-    result = hex(first | second)
-    regs[overflow_idx].value = '0'
-    regs[zero_idx].value = '0'
-    regs[neg_idx].value = '0'
-    regs[carry_idx].value = '1'
-
-    print(f"moving value {result} into reg {reg_num}")
-    regs[reg_num].value = result
-    if result == 0:
-        regs[zero_idx].value = '1'
-
-    print(regs[reg_num].value)
-    print('')
-
-
-def eor(regs, first, second, reg_num):
-    result = hex(first ^ second)
-    regs[overflow_idx].value = '0'
-    regs[zero_idx].value = '0'
-    regs[neg_idx].value = '0'
-    regs[carry_idx].value = '1'
-
-    print(f"moving value {result} into reg {reg_num}")
-    regs[reg_num].value = result
-    if result == 0:
-        regs[zero_idx].value = '1'
-
-    print(regs[reg_num].value)
-    print('')
-
-
 def startup(filename):
     regs = init_regs()
     line_num = 1
+    ALU = alu.ALU()
     with open(filename) as f:
         instructions = f.readlines()
     labels = []
@@ -282,6 +106,7 @@ def startup(filename):
             print(f"executing instruction {instruction[0:-1]}")
             op = get_op(instruction)
             reg_num = get_reg_num(instruction, len(op))
+            op = op[0:3]
             reg_digits = len(str(reg_num))
             second = ''
             conds = False
@@ -329,10 +154,10 @@ def startup(filename):
                         reg2 = regs[int(instruction[14:14 + reg_digits])]
                         second = int(reg2.value, 16)
 
-            if op[0:3] == 'mov' or op[0:3] == 'MOV':
-                mov(instruction, regs, reg1, reg_num, line_num, conds)
+            if op == 'mov' or op == 'MOV':
+                ALU.mov(instruction, regs, reg1, reg_num, line_num, conds)
 
-            if op[0:3] != 'mov' and op[0:3] != 'MOV':
+            if op != 'mov' and op != 'MOV':
                 if len(instruction) >= 13:
                     if instruction[12] == '#':
                         second = instruction[13]
@@ -342,24 +167,24 @@ def startup(filename):
                         second = int(second)
 
             if op == 'add' or op == 'ADD' or op == 'adc' or op == 'ADC':
-                add(regs, first, second, reg1, reg_num)
+                ALU.add(regs, first, second, reg1, reg_num, conds)
                 if op == 'adc' or op == 'ADC':
                     regs[reg_num] += regs[carry_idx].value
 
             if op == 'mul' or op == 'MUL':
-                mul(regs, first, second, reg1, reg_num)
+                ALU.mul(regs, first, second, reg1, reg_num, conds)
 
             if op == 'sub' or op == 'SUB':
-                sub(regs, first, second, reg1, reg_num)
+                ALU.sub(regs, first, second, reg1, reg_num, conds)
 
             if op == 'and' or op == 'AND':
-                bit_and(regs, first, second, reg_num)
+                ALU.bit_and(regs, first, second, reg_num, conds)
 
             if op == 'orr' or op == 'ORR':
-                orr(regs, first, second, reg_num)
+                ALU.orr(regs, first, second, reg_num, conds)
 
             if op == 'eor' or op == 'EOR':
-                eor(regs, first, second, reg_num)
+                ALU.eor(regs, first, second, reg_num, conds)
 
             if op == 'cmp' or op == 'CMP':
                 pass

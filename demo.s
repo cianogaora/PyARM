@@ -54,6 +54,6 @@ add r1, #2
 
 ;zero
 mov r1, #4
-sub r1, #4
+subs r1, #4
 
 end
