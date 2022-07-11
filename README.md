@@ -8,4 +8,6 @@ add r1, r2, r3
  ````
 Each instruction may be capitalised or lowercase. View the 'demo.s' file for further syntax examples
 
-Development in progress...
+Currently can be run by specifying the desired .s file at the bottom of 'main.py' and running it.
+
+Currently implementing suffixes and branching
