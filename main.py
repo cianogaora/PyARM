@@ -61,7 +61,7 @@ def get_reg_num(instruction, op_len):
         print("invalid op")
         return
 
-    reg_num = int(reg_num, 16)
+    reg_num = int(reg_num)
     return reg_num
 
 
@@ -84,10 +84,15 @@ def startup(filename):
     regs = init_regs()
     line_num = 1
     ALU = alu.ALU()
+    comp = False
     with open(filename) as f:
         instructions = f.readlines()
     labels = []
-    for instruction in instructions:
+    # for instruction in instructions:
+    instruction = ""
+
+    while instruction != "end":
+        instruction = instructions[line_num - 1]
 
         if instruction == 'end':
             print_regs(regs)
@@ -98,21 +103,52 @@ def startup(filename):
             continue
 
         if instruction[-2] == ':':
-            labels.append(instruction[0:-2])
+            labels.append((instruction[0:-2], line_num))
             line_num += 1
             continue
 
         else:
             print(f"executing instruction {instruction[0:-1]}")
             op = get_op(instruction)
-            reg_num = get_reg_num(instruction, len(op))
-            op = op[0:3]
-            reg_digits = len(str(reg_num))
-            second = ''
             conds = False
-
             if instruction[3] == 's' or instruction[3] == 'S':
                 conds = True
+
+            if op == "b" or op == "B":
+                label = instruction[2]
+                count = 3
+                while instruction[count].isalpha():
+                    label += instruction[count]
+                    count += 1
+
+                line_num = ALU.branch(label, labels)
+                continue
+
+            if op == "beq" or op == "BEQ":
+                if regs[zero_idx].value == '1':
+                    label = instruction[4]
+                    count = 5
+                    while instruction[count].isalpha():
+                        label += instruction[count]
+                        count += 1
+
+                    line_num = ALU.branch(label, labels)
+                continue
+
+            if op == "blt" or op == "BLT":
+                if regs[neg_idx].value == '1':
+                    label = instruction[4]
+                    count = 5
+                    while instruction[count].isalpha():
+                        label += instruction[count]
+                        count += 1
+
+                    line_num = ALU.branch(label, labels)
+                continue
+
+            reg_num = get_reg_num(instruction, len(op))
+            reg_digits = len(str(reg_num))
+            second = ''
 
             if not conds:
                 if instruction[8] != '#':
@@ -154,6 +190,7 @@ def startup(filename):
                         reg2 = regs[int(instruction[14:14 + reg_digits])]
                         second = int(reg2.value, 16)
 
+            op = op[0:3]
             if op == 'mov' or op == 'MOV':
                 ALU.mov(instruction, regs, reg1, reg_num, line_num, conds)
 
@@ -187,7 +224,9 @@ def startup(filename):
                 ALU.eor(regs, first, second, reg_num, conds)
 
             if op == 'cmp' or op == 'CMP':
-                pass
+                r1 = int(regs[reg_num].value, 16)
+                r2 = first
+                comp = ALU.cmp(regs, r1, r2)
 
             line_num += 1
 

@@ -87,7 +87,7 @@ class ALU:
 
         print(f"moving value {result} into reg {reg_num}")
         regs[reg_num].value = result
-        if result == 0 and conds:
+        if int(result, 16) == 0 and conds:
             regs[self.zero_idx].value = '1'
 
         print(regs[reg_num].value)
@@ -123,7 +123,7 @@ class ALU:
             regs[self.carry_idx].value = '1'
 
         if first - second < 0:
-            result = hex(reg1.max - second - first)
+            result = hex(reg1.max - abs(second - first) + 1)
             if conds:
                 regs[self.neg_idx].value = "1"
                 regs[self.carry_idx].value = "0"
@@ -182,3 +182,27 @@ class ALU:
 
         print(regs[reg_num].value)
         print('')
+
+    def cmp(self, regs, first, second):
+        result = first - second
+        regs[self.overflow_idx].value = '0'
+        regs[self.zero_idx].value = '0'
+        regs[self.neg_idx].value = '0'
+        regs[self.carry_idx].value = '1'
+
+        if result == 0:
+            regs[self.zero_idx].value = '1'
+            return True
+        else:
+            if result < 0:
+                regs[self.neg_idx].value = '1'
+                regs[self.carry_idx].value = '0'
+            return False
+
+    def branch(self, label, labels):
+        for item in labels:
+            if item[0] == label:
+                return item[1]
+
+        print("Label not present in code")
+        return "invalid"

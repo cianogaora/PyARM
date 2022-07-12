@@ -46,14 +46,35 @@ mov r8, #13
 Flags:
 ;negative + carry
 mov r1, #1
-sub r1, #2
+subs r1, #2
 
 ;overflow
 mov r1, #4294967295
-add r1, #2
+adds r1, #2
 
-;zero
+;zero and conds
 mov r1, #4
 subs r1, #4
+mov r2, #2
+muls r2, #0
+mov r3, #0
+adds r3, r3, r2
+
+;branching
+Branches:
+mov r1, #2
+mov r2, #2
+cmp r1, r2
+mov r2, #3
+cmp r1, r2
+
+;B Branches
+mov r1, r2
+cmp r1, r2
+;beq Branches
+mov r2, #3
+cmp r1, r2
+;assigning register values to others causing issues
+blt Branches
 
 end
