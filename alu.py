@@ -32,7 +32,8 @@ class ALU:
                     count += 1
                 reg2_num = int(reg2_num)
                 print(f"moving value {regs[reg2_num].value} into reg {reg_num}")
-                regs[reg_num].value = regs[reg2_num].value
+                val = regs[reg2_num].value
+                regs[reg_num].value = val
                 print('\n')
                 return
 

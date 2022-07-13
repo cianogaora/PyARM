@@ -5,6 +5,7 @@ mov r2, #2
 MOV r1, #1
 MOV r2, #2
 mov r3, r2
+mov r2, #5
 
 ;test addition
 Adding:
@@ -72,9 +73,8 @@ cmp r1, r2
 mov r1, r2
 cmp r1, r2
 ;beq Branches
-mov r2, #3
+mov r2, #4
 cmp r1, r2
-;assigning register values to others causing issues
-blt Branches
+;blt Branches
 
 end

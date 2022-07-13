@@ -10,4 +10,4 @@ Each instruction may be capitalised or lowercase. View the 'demo.s' file for fur
 
 Currently can be run by specifying the desired .s file at the bottom of 'main.py' and running it.
 
-Currently implementing suffixes and branching
+Correctly functioning instructions can be seen in the 'demo.s' file.

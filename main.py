@@ -67,6 +67,7 @@ def get_reg_num(instruction, op_len):
 
 def print_regs(regs):
     count = 0
+    print('')
     for reg in regs:
         if count == 6:
             print(reg.name + ': ' + reg.value + '\n', end='')
@@ -144,6 +145,7 @@ def startup(filename):
                         count += 1
 
                     line_num = ALU.branch(label, labels)
+                line_num += 1
                 continue
 
             reg_num = get_reg_num(instruction, len(op))
